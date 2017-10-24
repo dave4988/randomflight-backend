@@ -10,54 +10,47 @@ exports.handler = (event, context, callback) => {
     // into an object. A more robust implementation might inspect the Content-Type
     // header first and use a different parsing strategy based on that value.
 
-    //get data for return object here
-
-    var randomAirport = getRandomAirport('test', 'test');
-    console.log('Airport returned: ', randomAirport);
-
-
-    //TODO turn this into a .then() in the above statement. look at unicorn example
-    callback(null, {
-        statusCode: 201,
-        body: JSON.stringify({
-            AirportName: randomAirport.AirportName,
-            AirportCode: randomAirport.AirportCode,
-            DistanceFromOrigin: randomAirport.DistanceFromOrigin,
-            Country: randomAirport.Country,
-        }),
-        headers: {
-            'Access-Control-Allow-Origin': '*',
+    //TODO change to take distance into account
+    var params = {
+        TableName: "Airports",
+        IndexName: 'countryCode-index',
+        ExpressionAttributeValues: {
+            ":countryCode": "US"
         },
+        KeyConditionExpression: "countryCode = :countryCode",
+        Limit: 50
+    };
+    ddb.query(params, function(err, data) {
+        if (err) {
+            console.log(err);
+            errorResponse(err.message, context.awsRequestId, callback);
+        }
+        else {
+            if (data.Items) {
+                //TODO change to pick random item in the response
+                var airport = data.Items[Math.floor(Math.random()*data.Items.length)];
+                //airport = data.Items[0];
+                callback(null, {
+                    statusCode:201,
+                    body: JSON.stringify({
+                        AirportName: airport.name,
+                        AirportCode: airport.icao,
+                        //TODO make function to calculate
+                        DistanceFromOrigin: 200,
+                        Country: airport.Country
+                    }),
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                    },
+                });
+            }
+            else {
+                errorResponse('No airports found within the selected radius.', context.awsRequestId, callback);
+            }
+            console.log('response from dynamo: ', data)
+        }
     });
 };
-
-// This is where you would implement logic to find the optimal unicorn for
-// this ride (possibly invoking another Lambda function as a microservice.)
-// For simplicity, we'll just pick a unicorn at random.
-function findUnicorn(pickupLocation) {
-    console.log('Finding unicorn for ', pickupLocation.Latitude, ', ', pickupLocation.Longitude);
-    return fleet[Math.floor(Math.random() * fleet.length)];
-}
-
-function getRandomAirport(originAirport, maxMilesFromOrigin) {
-    //TODO get this from DB
-    const airport = [
-        {
-            AirportName: 'Ronald Reagan National Airport',
-            AirportCode: 'KDCA',
-            DistanceFromOrigin: '800',
-            Country: 'United States of America',
-        }
-    ];
-    return airport;
-}
-
-function toUrlString(buffer) {
-    return buffer.toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-}
 
 function errorResponse(errorMessage, awsRequestId, callback) {
   callback(null, {
