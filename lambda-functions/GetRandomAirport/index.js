@@ -72,8 +72,8 @@ exports.handler = (event, context, callback) => {
                                 AirportCode: airport.icao,
                                 Country: airport.countryName,
                                 City: airport.city,
-                                State: stateCode ? stateCode : "",
-                                Classification: classification
+                                State: airport.stateCode,
+                                Classification: airport.classification
                             }),
                             headers: {
                                 'Access-Control-Allow-Origin': '*',
