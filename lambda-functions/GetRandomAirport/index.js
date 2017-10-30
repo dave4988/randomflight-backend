@@ -64,13 +64,16 @@ exports.handler = (event, context, callback) => {
                     //console.log("returned from dynamo: ", data);
                     if (data.Items.length > 0) {
                         var airport = data.Items[Math.floor(Math.random()*data.Items.length)];
-                        //console.log('airport selected: ', airport)
+                        console.log('airport selected: ', airport)
                         callback(null, {
                             statusCode:201,
                             body: JSON.stringify({
                                 AirportName: airport.name,
                                 AirportCode: airport.icao,
-                                Country: airport.Country
+                                Country: airport.countryName,
+                                City: airport.city,
+                                State: stateCode,
+                                Classification: classification
                             }),
                             headers: {
                                 'Access-Control-Allow-Origin': '*',
