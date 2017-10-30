@@ -72,7 +72,7 @@ exports.handler = (event, context, callback) => {
                                 AirportCode: airport.icao,
                                 Country: airport.countryName,
                                 City: airport.city,
-                                State: stateCode,
+                                State: stateCode ? stateCode : "",
                                 Classification: classification
                             }),
                             headers: {
