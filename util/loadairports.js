@@ -25,9 +25,16 @@ var placeArray = jsonfile.readFileSync(placeFile);
  
 //utility function to create a single put request
 function getPlace(index){
+    var aiportToSave = placeArray[index];
+    //console.log("icao: ", aiportToSave.icao);
     return {
-        TableName: 'Airports',
-        Item: placeArray[index]
+        "TableName": 'Airports',
+        "Item": placeArray[index],
+        "Key": {
+            "icao": {
+                "S" : aiportToSave.icao
+            }
+        }
     };
 }
  
@@ -39,21 +46,33 @@ function savePlaces(index){
     }
  
     var params = getPlace(index);
+    var airportToSave = placeArray[index];
     //spit out what we are saving for sanity
-    console.log(JSON.stringify(params));
+    //console.log(JSON.stringify(params));
+    console.log(airportToSave.icao ? "next up: " + airportToSave.icao : "next up: n/a");
     //use the client to execute put request.
-    docClient.put(params, function(err, data) {
-        if (err) {
-            console.log("ERROR:");
-            console.log(err);
-        }
+    if (airportToSave.classification <= 3 && airportToSave.icao) {
+        docClient.put(params, function(err, data) {
+            if (err) {
+                console.log("ERROR:");
+                console.log(err);
+            }
+            else {
+                console.log("added!",params.Key.icao.S);
+            }
+            index += 1;
+            //save the next place on the list
+            //with half a second delay
+            setTimeout(function(){
+                savePlaces(index);
+            }, 500);
+        });
+    }
+    else {
+        console.log('did not add airport because it was category 1-3 or didnt have icao');
         index += 1;
-        //save the next place on the list
-        //with half a second delay
-        setTimeout(function(){
-            savePlaces(index);
-        }, 500);
-    });
+        savePlaces(index);
+    }
 }
  
 //start saving from index - 0
